@@ -33,7 +33,9 @@ const LoginPage = () => {
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(isSignUp ? { name, email, password } : { email, password }),
+      body: JSON.stringify(
+        isSignUp ? { name, email, password } : { email, password }
+      ),
     });
 
     const data = await res.json();
@@ -43,9 +45,19 @@ const LoginPage = () => {
       return;
     }
 
-    // ✅ API returns { message, user } — no token needed
+    // ✅ When creating account
+    if (isSignUp) {
+      alert(data.message || "Account created successfully");
+
+      // switch to login mode
+      setIsSignUp(false);
+      setPassword("");
+      return;
+    }
+
+    // ✅ When logging in
     if (data.user) {
-      login(data.user);       // pass user to context
+      login(data.user);
       navigate("/");
     }
 

@@ -8,16 +8,26 @@ exports.signup = async (req, res) => {
     const { data, error } = await supabase
       .from("users")
       .insert([{ name, email, password }])
-      .select(); // <-- important: returns inserted row(s)
+      .select();
 
     if (error) {
       console.error("Supabase error:", error);
-      return res.status(400).json({ message: error.message });
+
+      // ✅ Handle duplicate email error
+      if (error.code === "23505") {
+        return res.status(400).json({
+          message: "Email already exists. Please use another email.",
+        });
+      }
+
+      return res.status(400).json({
+        message: "Signup failed",
+      });
     }
 
     res.json({
       message: "User created",
-      user: data[0], // safe now
+      user: data[0],
     });
 
   } catch (err) {
