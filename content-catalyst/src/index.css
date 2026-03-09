@@ -1,0 +1,117 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 98%;
+    --foreground: 220 20% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 10%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 20% 10%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 10% 46%;
+
+    --accent: 220 14% 96%;
+    --accent-foreground: 220 20% 10%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 217 91% 60%;
+
+    --radius: 0.625rem;
+
+    /* Custom tokens */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+
+    --sidebar-width: 240px;
+    --sidebar-bg: 0 0% 100%;
+    --sidebar-foreground: 220 10% 46%;
+    --sidebar-active: 217 91% 60%;
+    --sidebar-active-bg: 217 91% 97%;
+    --sidebar-hover-bg: 220 14% 96%;
+    --sidebar-border: 220 13% 93%;
+
+    --auth-dark: 218 50% 8%;
+    --auth-dark-card: 218 40% 12%;
+    --auth-hero-text: 0 0% 100%;
+    --auth-hero-muted: 215 20% 65%;
+
+    --stat-blue: 217 91% 60%;
+    --stat-amber: 38 92% 50%;
+    --stat-green: 142 71% 45%;
+    --stat-purple: 262 83% 58%;
+
+    --virality-high: 0 84% 60%;
+    --virality-medium: 38 92% 50%;
+    --virality-low: 142 71% 45%;
+
+    --pipeline-researching: 38 92% 50%;
+    --pipeline-drafting: 217 91% 60%;
+    --pipeline-ready: 142 71% 45%;
+
+    --badge-emerging: 217 91% 60%;
+    --badge-viral: 0 84% 60%;
+    --badge-opportunity: 142 71% 45%;
+    --badge-niche: 262 83% 58%;
+    --badge-mainstream: 220 10% 46%;
+    --badge-fast-mover: 0 84% 60%;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 91% 97%;
+    --sidebar-accent-foreground: 220 20% 10%;
+    --sidebar-ring: 217 91% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer utilities {
+  .sidebar-link {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors;
+    color: hsl(var(--sidebar-foreground));
+  }
+  .sidebar-link:hover {
+    background: hsl(var(--sidebar-hover-bg));
+  }
+  .sidebar-link-active {
+    color: hsl(var(--sidebar-active));
+    background: hsl(var(--sidebar-active-bg));
+  }
+  .stat-card {
+    @apply bg-card rounded-xl border p-5 flex items-start gap-4;
+  }
+  .badge-status {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+}
