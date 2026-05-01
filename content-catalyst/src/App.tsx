@@ -13,6 +13,7 @@ import AnalyticsPage from "./pages/AnalyticsPage";
 import IntegrationsPage from "./pages/IntegrationsPage";
 import SettingsPage from "./pages/SettingsPage";
 import ArticlePage from "./pages/ArticlePage";
+import ResearchPage from "./pages/ResearchPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,7 +40,8 @@ const AppRoutes = () => (
     <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
     <Route path="/integrations" element={<ProtectedRoute><IntegrationsPage /></ProtectedRoute>} />
     <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-    <Route path="/article" element={<ProtectedRoute><ArticlePage /></ProtectedRoute>} />
+    <Route path="/article"  element={<ProtectedRoute><ArticlePage  /></ProtectedRoute>} />
+    <Route path="/research" element={<ProtectedRoute><ResearchPage /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );

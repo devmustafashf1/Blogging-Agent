@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Filter, ArrowUpDown, MoreVertical, Plus, X } from "lucide-react";
+import { Filter, ArrowUpDown, MoreVertical, Plus, X, Zap, Trash2 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import { getDrafts, deleteDraft, BlogDraft } from "@/lib/drafts";
 
 const tabs = ["Drafts", "In Review", "Approved", "Published"];
 
@@ -45,6 +46,18 @@ const ContentQueuePage = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newTopic, setNewTopic] = useState("Technology");
+  const [aiDrafts, setAiDrafts] = useState<BlogDraft[]>([]);
+
+  useEffect(() => {
+    setAiDrafts(getDrafts());
+  }, [activeTab]);
+
+  const handleDeleteAiDraft = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    deleteDraft(id);
+    setAiDrafts(getDrafts());
+    toast({ title: "Draft deleted" });
+  };
 
   const posts = allPosts[activeTab] || [];
 
@@ -77,7 +90,9 @@ const ContentQueuePage = () => {
               }`}
             >
               {tab}
-              <span className="ml-1 text-xs opacity-60">({(allPosts[tab] || []).length})</span>
+              <span className="ml-1 text-xs opacity-60">
+                ({tab === "Drafts" ? (allPosts[tab] || []).length + aiDrafts.length : (allPosts[tab] || []).length})
+              </span>
             </button>
           ))}
         </div>
@@ -91,10 +106,65 @@ const ContentQueuePage = () => {
         </div>
       </div>
 
+      {/* AI-Generated Drafts section (Drafts tab only) */}
+      {activeTab === "Drafts" && aiDrafts.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Zap className="w-4 h-4 text-primary" />
+            <span className="text-sm font-semibold text-foreground">AI-Generated Drafts</span>
+            <span className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">{aiDrafts.length}</span>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {aiDrafts.map((draft) => (
+              <div
+                key={draft.id}
+                onClick={() => navigate(`/article?id=${draft.id}`)}
+                className="bg-card border border-primary/20 rounded-xl p-4 hover:border-primary/50 hover:shadow-md transition-all duration-200 cursor-pointer group relative"
+              >
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <span className="text-[10px] font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <Zap className="w-2.5 h-2.5" /> AI Generated
+                  </span>
+                  <button
+                    onClick={(e) => handleDeleteAiDraft(e, draft.id)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-destructive/10 hover:text-destructive text-muted-foreground"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <p className="text-sm font-semibold text-foreground leading-tight mb-1 line-clamp-2">{draft.title}</p>
+                <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{draft.meta_description}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">{draft.estimated_word_count?.toLocaleString()} words</span>
+                  <span className="text-xs text-muted-foreground">{new Date(draft.createdAt).toLocaleDateString()}</span>
+                </div>
+                {draft.seo_keywords?.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2 pt-2 border-t border-border">
+                    {draft.seo_keywords.slice(0, 3).map((kw) => (
+                      <span key={kw} className="text-[10px] bg-secondary text-muted-foreground px-1.5 py-0.5 rounded">{kw}</span>
+                    ))}
+                    {draft.seo_keywords.length > 3 && (
+                      <span className="text-[10px] text-muted-foreground">+{draft.seo_keywords.length - 3} more</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          {posts.length > 0 && (
+            <div className="flex items-center gap-3 my-4">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs text-muted-foreground">Manual Drafts</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Content - Cards on mobile, Table on desktop */}
       {/* Mobile Cards */}
       <div className="space-y-3 md:hidden">
-        {posts.length === 0 ? (
+        {posts.length === 0 && (activeTab !== "Drafts" || aiDrafts.length === 0) ? (
           <div className="bg-card border border-border rounded-xl p-8 text-center text-muted-foreground">No posts in this category yet.</div>
         ) : (
           posts.map((post) => (
@@ -133,7 +203,7 @@ const ContentQueuePage = () => {
             </tr>
           </thead>
           <tbody>
-            {posts.length === 0 ? (
+            {posts.length === 0 && (activeTab !== "Drafts" || aiDrafts.length === 0) ? (
               <tr><td colSpan={6} className="px-5 py-12 text-center text-muted-foreground">No posts in this category yet.</td></tr>
             ) : (
               posts.map((post) => (

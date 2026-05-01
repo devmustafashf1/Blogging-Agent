@@ -1,7 +1,21 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FileText, Star, Wifi, TrendingUp, Search, PenTool, Shield, Send, Bot, Flame, Eye,
+  Zap, Lightbulb, Snowflake, Grid3X3, Database,
 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
+
+const API_BASE = "http://localhost:5000/api/trends";
+
+const BADGE_MAP: Record<string, { label: string; color: string }> = {
+  BREAKING:        { label: "BREAKING",   color: "text-destructive bg-destructive/10" },
+  HOT_DEBATE:      { label: "HOT DEBATE", color: "text-orange-600 bg-orange-100" },
+  HOT_STORY:       { label: "HOT STORY",  color: "text-primary bg-primary/10" },
+  VIRAL_FEEL_GOOD: { label: "VIRAL",      color: "text-pink-600 bg-pink-100" },
+  EVERGREEN:       { label: "EVERGREEN",  color: "text-success bg-success/10" },
+  MONITOR:         { label: "MONITOR",    color: "text-muted-foreground bg-secondary" },
+};
 
 const stats = [
   { label: "POSTS PUBLISHED", value: "1,284", change: "+12% this month", icon: FileText, iconBg: "bg-primary/10", iconColor: "text-primary" },
@@ -27,14 +41,34 @@ const pipelineDrafting = [
 const pipelineReady = [
   { title: "Cybersecurity Trends for 2025", seo: "98/100", hasPublish: true },
 ];
-const trending = [
-  { title: '"Open Source LLMs vs SaaS Models"', category: "Tech & Computing", virality: 98 },
-  { title: "The Rise of Personal Branding for Developers", category: "Career & Business", virality: 84 },
-  { title: "Sustainable Fashion: Beyond the Greenwashing", category: "Lifestyle", virality: 72 },
-  { title: "Is the Remote Work Era Actually Ending?", category: "News", virality: 68 },
-];
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+
+  const [activeTab, setActiveTab]     = useState<"reddit" | "google">("reddit");
+  const [redditPicks, setRedditPicks] = useState<any[]>([]);
+  const [googleTrends, setGoogleTrends] = useState<any[]>([]);
+  const [trendLoading, setTrendLoading] = useState(true);
+  const [fromCache, setFromCache]     = useState(false);
+
+  useEffect(() => {
+    const fetchTrends = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/combined?geo=US&category=all&limit=10`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setRedditPicks((data.topPicks || []).slice(0, 5));
+        setGoogleTrends((data.googleTrends?.data || []).slice(0, 5));
+        setFromCache(data.fromCache || false);
+      } catch {
+        // silently fail — dashboard widget, non-critical
+      } finally {
+        setTrendLoading(false);
+      }
+    };
+    fetchTrends();
+  }, []);
+
   return (
     <AppLayout>
       {/* Stats */}
@@ -164,26 +198,126 @@ const Dashboard = () => {
         </div>
 
         {/* Trending Now */}
-        <div className="bg-card border border-border rounded-xl p-5 hover:shadow-md transition-shadow duration-300">
-          <div className="flex items-center gap-2 mb-4">
-            <Flame className="w-5 h-5 text-warning" />
-            <h3 className="text-lg font-bold text-foreground">Trending Now</h3>
+        <div className="bg-card border border-border rounded-xl p-5 hover:shadow-md transition-shadow duration-300 flex flex-col">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Flame className="w-5 h-5 text-warning" />
+              <h3 className="text-lg font-bold text-foreground">Trending Now</h3>
+            </div>
+            {!trendLoading && (
+              <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                {fromCache
+                  ? <><Database className="w-3 h-3" /> cached</>
+                  : <><Wifi className="w-3 h-3" /> live</>
+                }
+              </span>
+            )}
           </div>
-          <div className="space-y-4">
-            {trending.map((item) => (
-              <div key={item.title} className="flex items-start justify-between gap-3 p-2 -mx-2 rounded-lg hover:bg-secondary/50 transition-colors duration-150 cursor-pointer">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground leading-snug">{item.title}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{item.category}</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className={`text-sm font-bold ${item.virality >= 90 ? "text-success" : item.virality >= 75 ? "text-primary" : "text-warning"}`}>{item.virality}%</p>
-                  <p className="text-[10px] text-muted-foreground">Virality</p>
-                </div>
-              </div>
-            ))}
+
+          {/* Tabs */}
+          <div className="flex gap-1 mb-4 bg-secondary rounded-lg p-1">
+            <button
+              onClick={() => setActiveTab("reddit")}
+              className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-all duration-150 ${
+                activeTab === "reddit"
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Reddit
+            </button>
+            <button
+              onClick={() => setActiveTab("google")}
+              className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-all duration-150 ${
+                activeTab === "google"
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Google
+            </button>
           </div>
-          <button className="w-full mt-5 py-2 text-sm font-medium text-foreground border border-border rounded-lg hover:bg-secondary hover:border-primary/20 transition-all duration-200">View Full Report</button>
+
+          {/* Loading skeleton */}
+          {trendLoading && (
+            <div className="space-y-3 flex-1">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="h-3 bg-secondary rounded w-16 mb-1.5" />
+                  <div className="h-4 bg-secondary rounded w-full" />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Reddit list */}
+          {!trendLoading && activeTab === "reddit" && (
+            <div className="space-y-3 flex-1">
+              {redditPicks.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-6">No data available</p>
+              ) : (
+                redditPicks.map((item: any, i: number) => {
+                  const badge = BADGE_MAP[item.blogPotential] || BADGE_MAP.MONITOR;
+                  const title = item.title?.length > 60 ? item.title.slice(0, 60) + "…" : item.title;
+                  return (
+                    <div
+                      key={i}
+                      className="flex items-start gap-2 p-2 -mx-2 rounded-lg hover:bg-secondary/50 transition-colors duration-150 cursor-pointer"
+                      onClick={() => item.url && window.open(item.url, "_blank")}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <span className={`inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-full mb-1 ${badge.color}`}>
+                          {badge.label}
+                        </span>
+                        <p className="text-xs font-semibold text-foreground leading-snug">{title}</p>
+                        {item.subreddit && (
+                          <p className="text-[10px] text-muted-foreground mt-0.5">r/{item.subreddit}</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+
+          {/* Google list */}
+          {!trendLoading && activeTab === "google" && (
+            <div className="space-y-3 flex-1">
+              {googleTrends.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-6">No data available</p>
+              ) : (
+                googleTrends.map((trend: any, i: number) => (
+                  <div
+                    key={i}
+                    className="flex items-start justify-between gap-2 p-2 -mx-2 rounded-lg hover:bg-secondary/50 transition-colors duration-150 cursor-pointer"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
+                        #{trend.rank} · {(trend.category || "").replace(/_/g, " ")}
+                      </p>
+                      <p className="text-xs font-semibold text-foreground leading-snug capitalize">
+                        {trend.title?.length > 55 ? trend.title.slice(0, 55) + "…" : trend.title}
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className={`text-xs font-bold ${trend.blogScore >= 7 ? "text-success" : trend.blogScore >= 5 ? "text-primary" : "text-warning"}`}>
+                        {trend.blogScore}/10
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          <button
+            onClick={() => navigate("/trends")}
+            className="w-full mt-5 py-2 text-sm font-medium text-foreground border border-border rounded-lg hover:bg-secondary hover:border-primary/20 transition-all duration-200"
+          >
+            View Full Report →
+          </button>
         </div>
       </div>
 
