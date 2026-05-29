@@ -142,7 +142,7 @@ const ArticlePage = () => {
 
   // Proxy URL for display — bypasses hotlink protection on source sites
   const proxyImg = (url: string) =>
-    `http://localhost:5000/api/research/image?url=${encodeURIComponent(url)}`;
+    `${import.meta.env.VITE_API_URL}/api/research/image?url=${encodeURIComponent(url)}`;
 
   const agentChecks = [
     {

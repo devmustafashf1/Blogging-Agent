@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 
-const API_BASE = "http://localhost:5000/api/trends";
+const API_BASE = `${import.meta.env.VITE_API_URL}/api/trends`;
 
 const BADGE_MAP: Record<string, { label: string; color: string }> = {
   BREAKING:        { label: "BREAKING",   color: "text-destructive bg-destructive/10" },

@@ -4,7 +4,7 @@ import { Search, TrendingUp, Zap, Lightbulb, Grid3X3, Snowflake, RefreshCw, Aler
 import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 
-const API_BASE = "http://localhost:5000/api/trends";
+const API_BASE = `${import.meta.env.VITE_API_URL}/api/trends`;
 
 const BADGE_MAP: Record<string, { label: string; color: string; icon: any }> = {
   BREAKING:        { label: "BREAKING",   color: "text-destructive bg-destructive/10", icon: Zap },

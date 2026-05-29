@@ -353,7 +353,7 @@ const ResearchPage = () => {
     // Mark topic node as done immediately
     setNode("topic", { status: "done", data: { topic } });
 
-    const url = `http://localhost:5000/api/research/stream?topic=${encodeURIComponent(topic)}&geo=${geo}`;
+    const url = `${import.meta.env.VITE_API_URL}/api/research/stream?topic=${encodeURIComponent(topic)}&geo=${geo}`;
     const es  = new EventSource(url);
 
     es.onmessage = (e) => {
