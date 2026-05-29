@@ -2,6 +2,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   TrendingUp,
+  Crosshair,
   FileText,
   Calendar,
   BarChart3,
@@ -16,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const navItems = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/trends", icon: TrendingUp, label: "Trends" },
+  { to: "/niche", icon: Crosshair, label: "Niche" },
   { to: "/content", icon: FileText, label: "Content Queue" },
   { to: "/publishing", icon: Calendar, label: "Publishing" },
   { to: "/analytics", icon: BarChart3, label: "Analytics" },

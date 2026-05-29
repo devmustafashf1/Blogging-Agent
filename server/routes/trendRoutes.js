@@ -5,7 +5,7 @@ const {
   getRedditTrends, searchReddit, getRedditComments,
   getCombinedTrends, resyncCache, getCacheStatus,
   collectTrends, aiAnalyze, analyzeWithAI, generateBrief,
-  getNicheTrends,
+  getNicheTrends, getNicheIdeas,
   debugSerpApi, debugReddit, debugDeepSeek,
 } = require("../controllers/trendController");
 
@@ -32,7 +32,9 @@ router.get("/cache-status", getCacheStatus);
 
 // ── Niche-specific trend filtering ───────────────────────────────────────────
 // GET /niche?niches=AI,fitness,crypto&geo=US
-router.get("/niche", getNicheTrends);
+router.get("/niche",       getNicheTrends);
+// GET /niche-ideas?niche=tech&geo=US  → SerpAPI related queries + category trending
+router.get("/niche-ideas", getNicheIdeas);
 
 // ── Two-step AI flow ──────────────────────────────────────────────────────────
 router.get("/collect",      collectTrends);

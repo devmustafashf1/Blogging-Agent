@@ -14,6 +14,7 @@ import IntegrationsPage from "./pages/IntegrationsPage";
 import SettingsPage from "./pages/SettingsPage";
 import ArticlePage from "./pages/ArticlePage";
 import ResearchPage from "./pages/ResearchPage";
+import NichePage from "./pages/NichePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const AppRoutes = () => (
     <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
     <Route path="/article"  element={<ProtectedRoute><ArticlePage  /></ProtectedRoute>} />
     <Route path="/research" element={<ProtectedRoute><ResearchPage /></ProtectedRoute>} />
+    <Route path="/niche"    element={<ProtectedRoute><NichePage    /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );

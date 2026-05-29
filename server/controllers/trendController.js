@@ -443,6 +443,22 @@ const getNicheTrends = async (req, res) => {
   }
 };
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /api/trends/niche-ideas?niche=tech&geo=US
+// Uses SerpAPI RELATED_QUERIES + category-specific trending to generate blog ideas
+// ═══════════════════════════════════════════════════════════════════════════════
+const getNicheIdeas = async (req, res) => {
+  try {
+    const { niche, geo = "US" } = req.query;
+    if (!niche) return res.status(400).json({ success: false, message: "niche param required" });
+
+    const result = await trendService.fetchNicheContentIdeas(niche, geo);
+    res.status(200).json({ success: true, fetchedAt: new Date().toISOString(), ...result });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // ─── Debug ────────────────────────────────────────────────────────────────────
 const debugSerpApi = async (req, res) => {
   try {
@@ -481,6 +497,6 @@ module.exports = {
   getRedditTrends, searchReddit, getRedditComments,
   getCombinedTrends, resyncCache, getCacheStatus,
   collectTrends, aiAnalyze, analyzeWithAI, generateBrief,
-  getNicheTrends,
+  getNicheTrends, getNicheIdeas,
   debugSerpApi, debugReddit, debugDeepSeek,
 };

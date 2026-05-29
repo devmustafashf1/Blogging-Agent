@@ -154,9 +154,92 @@ const computeComposite   = (post) => {
   return parseFloat((Math.min(v/100,10)*0.4 + Math.min(post.score/1000,10)*0.35 + Math.min(d*10,10)*0.25).toFixed(4));
 };
 
+// ── Niche → Google Trends category_id map ────────────────────────────────────
+const NICHE_CATEGORY_MAP = {
+  tech: 18, technology: 18,
+  fitness: 7, health: 7, wellness: 7,
+  business: 3, finance: 3, economy: 3,
+  entertainment: 4, fashion: 4, lifestyle: 4,
+  science: 15,
+  food: 5, cooking: 5,
+  news: null,
+};
+
+const suggestBlogAngle = (query) => {
+  const q = query.toLowerCase();
+  if (/^(how|why|what|when|where|who)\b/.test(q)) return "Answer the question — SEO explainer post";
+  if (/\b(vs|versus|compar(e|ed|ison))\b/.test(q)) return "Comparison post — pick a side with data";
+  if (/\b(best|top|review)\b/.test(q))            return "Listicle / roundup with rankings";
+  if (/\b(price|cost|cheap|free|afford)\b/.test(q)) return "Cost guide / value analysis";
+  if (/\b(news|update|latest|2025|2026)\b/.test(q)) return "News roundup — what changed and why it matters";
+  if (/\b(guide|tutorial|tips|tricks|learn|beginner)\b/.test(q)) return "Step-by-step guide for beginners";
+  if (/\b(problem|fix|issue|error|not working|broken)\b/.test(q)) return "Troubleshooting guide";
+  if (/\b(trend|future|predict|next|upcoming)\b/.test(q)) return "Trend analysis + what to expect";
+  return "Deep-dive explainer — educate + unique opinion angle";
+};
+
+const fetchNicheContentIdeas = (keyword, geo = "US") => {
+  const categoryId = NICHE_CATEGORY_MAP[keyword.toLowerCase()] ?? null;
+
+  // Always fetch related queries; optionally fetch category trending
+  const relatedPromise = new Promise((resolve) => {
+    getJson(
+      { engine: "google_trends", q: keyword, geo, data_type: "RELATED_QUERIES", api_key: SERPAPI_KEY },
+      (json) => resolve(json.error ? {} : (json["related_queries"] || {}))
+    );
+  });
+
+  const categoryPromise = categoryId
+    ? new Promise((resolve) => {
+        getJson(
+          { engine: "google_trends_trending_now", geo, category_id: categoryId, hl: "en", api_key: SERPAPI_KEY },
+          (json) => resolve(json.error ? [] : (json["trending_searches"] || []))
+        );
+      })
+    : Promise.resolve([]);
+
+  return Promise.all([relatedPromise, categoryPromise]).then(([related, categoryTrends]) => {
+    const rising = (related.rising || []).map((item) => ({
+      type: "RISING",
+      query: item.query,
+      value: item.value,
+      priority: "HIGH",
+      blogAngle: suggestBlogAngle(item.query),
+    }));
+
+    const top = (related.top || []).map((item) => ({
+      type: "TOP",
+      query: item.query,
+      value: item.value,
+      priority: "MEDIUM",
+      blogAngle: suggestBlogAngle(item.query),
+    }));
+
+    const trending = categoryTrends.slice(0, 10).map((item, i) => ({
+      type: "CATEGORY_TRENDING",
+      query: item.query || item.title || "",
+      estimatedVolume: item.formattedTraffic || estimateVolumeFromRank(i + 1),
+      priority: i < 3 ? "HIGH" : "MEDIUM",
+      blogAngle: suggestBlogAngle(item.query || item.title || ""),
+      relatedArticles: (item.articles || []).slice(0, 2).map((a) => ({
+        title: a.title, source: a.source, url: a.url,
+      })),
+    }));
+
+    return {
+      keyword, geo, categoryId,
+      risingIdeas: rising,
+      topIdeas: top,
+      categoryTrending: trending,
+      totalIdeas: rising.length + top.length + trending.length,
+    };
+  });
+};
+
 module.exports = {
-  fetchGoogleTrends, fetchRelatedQueries,
+  fetchGoogleTrends, fetchRelatedQueries, fetchNicheContentIdeas,
   estimateVolumeFromRank, isUsableTrend, categorizeTrend,
   classifyBlogPotential,
   computeVelocity, computeDebateRatio, computeComposite,
+  NICHE_CATEGORY_MAP,
 };

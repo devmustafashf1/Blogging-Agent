@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import TurndownService from "turndown";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { getDraftById, saveDraft, blogToHtml } from "@/lib/drafts";
 import {
@@ -30,6 +31,8 @@ import {
   Zap,
   Eye,
   Clock,
+  Plug,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +48,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "@/hooks/use-toast";
+
+const CUSTOM_API_KEY = "custom_api_integration";
+
+const turndown = new TurndownService({ headingStyle: "atx", bulletListMarker: "-", codeBlockStyle: "fenced" });
+
+interface CustomApiConfig {
+  baseUrl: string;
+  token: string;
+  username: string;
+  connectedAt: string;
+  tokenExp: number | null;
+}
+
+const loadCustomApi = (): CustomApiConfig | null => {
+  try { return JSON.parse(localStorage.getItem(CUSTOM_API_KEY) || "null"); }
+  catch { return null; }
+};
 
 const sampleContent = `<h1>The Future of Sustainable Architecture</h1>
 <p class="subtitle">AI-generated draft exploring the intersection of ecology and design.</p>
@@ -190,6 +210,73 @@ const ArticlePage = () => {
     });
   };
 
+  const [publishingToCustomSite, setPublishingToCustomSite] = useState(false);
+
+  const handlePublishToCustomSite = async () => {
+    const config = loadCustomApi();
+    if (!config) {
+      toast({
+        title: "No custom API configured",
+        description: "Go to Integrations → Custom API and save your site credentials first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check token expiry
+    if (config.tokenExp && config.tokenExp < Date.now() / 1000) {
+      toast({
+        title: "Token expired",
+        description: "Your API token has expired. Go to Integrations → Custom API and re-login.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const htmlContent = editorRef.current?.innerHTML || "";
+    const markdownContent = turndown.turndown(htmlContent);
+    const plainText = htmlContent.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    const excerpt = metaDesc.trim() || plainText.slice(0, 200);
+
+    const body = {
+      title: title.trim() || "Untitled",
+      author: config.username || "Author",
+      excerpt,
+      content: markdownContent,
+      tags: keywords.join(", "),
+      read_time: Math.max(1, Math.ceil(wordCount / 200)),
+      pinned: false,
+    };
+
+    setPublishingToCustomSite(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/proxy/custom`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          targetUrl: `${config.baseUrl}/read/blog`,
+          token: config.token,
+          method: "POST",
+          body,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
+      toast({
+        title: "Published to your site!",
+        description: `"${title}" was created on ${config.baseUrl}.`,
+      });
+    } catch (err: any) {
+      toast({
+        title: "Publish failed",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setPublishingToCustomSite(false);
+    }
+  };
+
   // eslint-disable-next-line @typescript-eslint/no-deprecated
   const execCmd = (cmd: string, value?: string) => {
     document.execCommand(cmd, false, value ?? undefined);
@@ -307,6 +394,22 @@ const ArticlePage = () => {
               Save
             </Button>
           )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-xs gap-1.5 border-primary/40 text-primary hover:bg-primary/5"
+            onClick={handlePublishToCustomSite}
+            disabled={publishingToCustomSite}
+            title={loadCustomApi() ? `Publish to ${loadCustomApi()?.baseUrl}` : "Configure Custom API in Integrations first"}
+          >
+            {publishingToCustomSite
+              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              : <Plug className="w-3.5 h-3.5" />
+            }
+            <span className="hidden sm:inline">
+              {publishingToCustomSite ? "Publishing…" : "My Site"}
+            </span>
+          </Button>
           <Button size="sm" className="text-xs gap-1.5" onClick={handlePublish}>
             <span className="hidden sm:inline">Approve &</span> Publish
             <Send className="w-3.5 h-3.5" />

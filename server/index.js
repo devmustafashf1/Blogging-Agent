@@ -6,6 +6,7 @@ require("dotenv").config();
 const authRoutes     = require("./routes/authRoutes");
 const trendRoutes    = require("./routes/trendRoutes");
 const researchRoutes = require("./routes/researchRoutes");
+const proxyRoutes    = require("./routes/proxyRoutes");
 const { startCronJob } = require("./cronJob");
 
 const app = express();
@@ -23,6 +24,7 @@ app.use((req, res, next) => {
 app.use("/api/auth",     authRoutes);
 app.use("/api/trends",   trendRoutes);
 app.use("/api/research", researchRoutes);
+app.use("/api/proxy",    proxyRoutes);
 
 app.get("/", (req, res) => res.send("API running"));
 
