@@ -2,6 +2,7 @@ const express  = require("express");
 const cors     = require("cors");
 require("dotenv").config();
 
+
 const authRoutes     = require("./routes/authRoutes");
 const trendRoutes    = require("./routes/trendRoutes");
 const researchRoutes = require("./routes/researchRoutes");
