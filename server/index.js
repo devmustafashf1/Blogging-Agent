@@ -10,6 +10,7 @@ const { startCronJob } = require("./cronJob");
 
 const app = express();
 
+
 app.use(cors());
 app.use(express.json());
 
